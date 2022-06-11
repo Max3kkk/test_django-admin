@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.http import HttpResponseRedirect
+
 from .models import Customer, Order, OrderItem, Product
 
 
@@ -16,23 +18,55 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'get_cust_name', 'get_cust_phone', 'get_cust_email', 'address', 'status')
-    list_filter = ('status', 'customer_id__phone_number')
+    list_display = (
+        'id', 'get_cust_name', 'get_cust_phone', 'get_cust_email', 'address', 'created_at', 'status', 'get_items',
+        'calc_order_sum')
+    list_filter = ('status', 'customer_id__phone_number', 'created_at')
+    readonly_fields = ('status',)
+    actions = ['cancel_orders']
 
     def get_cust_name(self, obj):
         return obj.customer_id.name
-    get_cust_name.short_description = 'Customer Name'
+
+    get_cust_name.short_description = 'Cust. Name'
     get_cust_name.admin_order_name = 'customer_id__name'
 
     def get_cust_phone(self, obj):
         return obj.customer_id.phone_number
-    get_cust_phone.short_description = 'Customer Phone Number'
+
+    get_cust_phone.short_description = 'Cust. Phone Number'
     get_cust_name.admin_order_name = 'customer_id__phone_number'
 
     def get_cust_email(self, obj):
         return obj.customer_id.email
-    get_cust_email.short_description = 'Customer Email'
+
+    get_cust_email.short_description = 'Cust. Email'
     get_cust_name.admin_order_name = 'customer_id__email'
+
+    def get_items(self, obj):
+        return list(OrderItem.objects.filter(order_id=obj.id))
+
+    get_items.short_description = 'Items'
+
+    def calc_order_sum(self, obj):
+        return sum(list(OrderItem.objects.filter(order_id=obj.id).values_list('price', flat=True)))
+
+    calc_order_sum.short_description = 'Sum'
+
+    change_form_template = "admin/cancel_order.html"
+
+    def response_change(self, request, obj):
+        if "_cancel_order" in request.POST:
+            # matching_names_except_this = self.get_queryset(request).filter(name=obj.name).exclude(pk=obj.id)
+            obj.status = 'Canceled'
+            obj.save()
+            self.message_user(request, "This order has been canceled")
+            return HttpResponseRedirect(".")
+        return super().response_change(request, obj)
+
+    @admin.action(description='Cancel Orders')
+    def cancel_orders(self, request, queryset):
+        queryset.update(status='Canceled')
 
 
 admin.site.register(OrderItem)
