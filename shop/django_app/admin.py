@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.http import HttpResponseRedirect
-
+from django.db.models import Sum
 from .models import Customer, Order, OrderItem, Product
 
 
@@ -24,6 +24,31 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ('title',)
 
 
+class OrderSumFilter(admin.SimpleListFilter):
+    title = 'Order Sum'
+    parameter_name = 'order_sum'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('<100', 'less than 100rub'),
+            ('<500', 'less than 500rub'),
+            ('<1000', 'less than 10000rub'),
+            ('<10000', 'less than 10000rub'),
+        )
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value == '<100':
+            return Order.objects.annotate(sum=Sum('item_prices__price')).filter(sum__lte=100)
+        elif value == '<500':
+            return Order.objects.annotate(sum=Sum('item_prices__price')).filter(sum__lte=500)
+        elif value == '<1000':
+            return Order.objects.annotate(sum=Sum('item_prices__price')).filter(sum__lte=1000)
+        elif value == '<10000':
+            return Order.objects.annotate(sum=Sum('item_prices__price')).filter(sum__lte=10000)
+        return queryset
+
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     actions = ['cancel_orders']
@@ -31,7 +56,7 @@ class OrderAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'get_cust_name', 'get_cust_phone', 'get_cust_email', 'address', 'created_at', 'status', 'get_items',
         'calc_order_sum')
-    list_filter = ('status', 'customer_id__phone_number', 'created_at')
+    list_filter = ('status', 'customer_id__phone_number', 'created_at', OrderSumFilter)
     readonly_fields = (
         'id', 'status', 'get_cust_name', 'get_cust_phone', 'get_cust_email', 'created_at', 'calc_order_sum')
     fields = (
