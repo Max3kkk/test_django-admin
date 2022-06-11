@@ -1,0 +1,32 @@
+version: "3.9"
+services:
+  db:
+    image: postgres
+    container_name: db
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    restart: always
+  admin:
+    container_name: admin
+    depends_on:
+      - db
+    build:
+      args:
+        ENV: dev
+      context: .
+      dockerfile: ./shop/Dockerfile
+    volumes:
+      - ./shop/django_app/:/app/django_app/
+    ports:
+      - "8000:8000"
+    restart: always
+    environment:
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres

@@ -32,9 +32,11 @@ class OrderAdmin(admin.ModelAdmin):
         'id', 'get_cust_name', 'get_cust_phone', 'get_cust_email', 'address', 'created_at', 'status', 'get_items',
         'calc_order_sum')
     list_filter = ('status', 'customer_id__phone_number', 'created_at')
-    readonly_fields = ('id', 'status', 'get_cust_name', 'get_cust_phone', 'get_cust_email', 'created_at', 'calc_order_sum')
-    fields = ('id', 'customer_id', 'get_cust_name', 'get_cust_phone', 'get_cust_email', 'address', 'created_at', 'status',
-              'calc_order_sum')
+    readonly_fields = (
+        'id', 'status', 'get_cust_name', 'get_cust_phone', 'get_cust_email', 'created_at', 'calc_order_sum')
+    fields = (
+        'id', 'customer_id', 'get_cust_name', 'get_cust_phone', 'get_cust_email', 'address', 'created_at', 'status',
+        'calc_order_sum')
 
     def get_cust_name(self, obj):
         return obj.customer_id.name
