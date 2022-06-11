@@ -1,6 +1,7 @@
 from django.contrib import admin
-from django.http import HttpResponseRedirect
 from django.db.models import Sum
+from django.http import HttpResponseRedirect
+
 from .models import Customer, Order, OrderItem, Product
 
 
@@ -95,7 +96,7 @@ class OrderAdmin(admin.ModelAdmin):
 
     def response_change(self, request, obj):
         if "_cancel_order" in request.POST:
-            obj.status = 'Canceled'
+            obj.status = 'canceled'
             obj.save()
             self.message_user(request, "This order has been canceled")
             return HttpResponseRedirect(".")
@@ -103,7 +104,7 @@ class OrderAdmin(admin.ModelAdmin):
 
     @admin.action(description='Cancel Orders')
     def cancel_orders(self, request, queryset):
-        queryset.update(status='Canceled')
+        queryset.update(status='canceled')
 
 
 admin.site.register(OrderItem)

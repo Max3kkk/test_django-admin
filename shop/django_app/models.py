@@ -1,3 +1,5 @@
+from auditlog.models import AuditlogHistoryField
+from auditlog.registry import auditlog
 from django.core.validators import RegexValidator
 from django.db import models
 
@@ -13,15 +15,16 @@ class Customer(models.Model):
 
 
 class Order(models.Model):
-    _STATUS = (('Created', 'Created'),
-               ('Assembling', 'Assembling'),
-               ('Delivering', 'Delivering'),
-               ('Delivered', 'Delivered'),
-               ('Issued', 'Issued'),
-               ('Canceled', 'Canceled'))
+    history = AuditlogHistoryField()
+    _STATUS = (('created', 'Created'),
+               ('assembling', 'Assembling'),
+               ('delivering', 'Delivering'),
+               ('delivered', 'Delivered'),
+               ('issued', 'Issued'),
+               ('canceled', 'Canceled'))
     customer_id = models.ForeignKey(Customer, on_delete=models.CASCADE)
     address = models.TextField()
-    status = models.CharField(max_length=100, choices=_STATUS, default="Created")
+    status = models.CharField(max_length=30, choices=_STATUS, default='created')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -49,3 +52,6 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f' {str(self.quantity)} {self.product_id.title}: {str(self.price)}rub'
+
+
+auditlog.register(Order, include_fields=['status'])
