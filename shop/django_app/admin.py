@@ -6,11 +6,19 @@ from .models import Customer, Order, OrderItem, Product
 
 @admin.register(Customer)
 class CustomerAdmin(admin.ModelAdmin):
+    readonly_fields = ('id',)
     list_display = ('id', 'name', 'phone_number', 'email')
+
+
+class OrderItemInline(admin.TabularInline):
+    model = OrderItem
+    extra = 0
+    fields = ('product_id', 'quantity', 'price',)
 
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    readonly_fields = ('id',)
     list_display = ('id', 'title', 'description',)
     list_filter = ('id',)
     search_fields = ('title',)
@@ -18,12 +26,15 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
+    actions = ['cancel_orders']
+    inlines = [OrderItemInline, ]
     list_display = (
         'id', 'get_cust_name', 'get_cust_phone', 'get_cust_email', 'address', 'created_at', 'status', 'get_items',
         'calc_order_sum')
     list_filter = ('status', 'customer_id__phone_number', 'created_at')
-    readonly_fields = ('status',)
-    actions = ['cancel_orders']
+    readonly_fields = ('id', 'status', 'get_cust_name', 'get_cust_phone', 'get_cust_email', 'created_at', 'calc_order_sum')
+    fields = ('id', 'customer_id', 'get_cust_name', 'get_cust_phone', 'get_cust_email', 'address', 'created_at', 'status',
+              'calc_order_sum')
 
     def get_cust_name(self, obj):
         return obj.customer_id.name
@@ -57,7 +68,6 @@ class OrderAdmin(admin.ModelAdmin):
 
     def response_change(self, request, obj):
         if "_cancel_order" in request.POST:
-            # matching_names_except_this = self.get_queryset(request).filter(name=obj.name).exclude(pk=obj.id)
             obj.status = 'Canceled'
             obj.save()
             self.message_user(request, "This order has been canceled")
