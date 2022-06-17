@@ -94,6 +94,12 @@ class OrderAdmin(admin.ModelAdmin):
 
     change_form_template = "admin/cancel_order.html"
 
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['is_cancelable'] = (Order.objects.get(
+            pk=object_id).status != "canceled") and "change" in request.path
+        return super().change_view(request, object_id, form_url, extra_context=extra_context)
+
     def response_change(self, request, obj):
         if "_cancel_order" in request.POST:
             obj.status = 'canceled'
